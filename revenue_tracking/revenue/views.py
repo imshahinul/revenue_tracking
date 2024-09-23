@@ -1,5 +1,5 @@
 from rest_framework import viewsets, filters
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, BasePermission
 from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope
 from .models import Project, Task, RevenueLog
 from .serializers import ProjectSerializer, TaskSerializer, RevenueLogSerializer
@@ -7,6 +7,26 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.db.models import Sum
+
+
+class IsAdminOrManager(BasePermission):
+    """
+    Custom permission to allow only Admin or Manager to edit objects.
+    """
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and (
+            request.user.groups.filter(name='Admin').exists() or
+            request.user.groups.filter(name='Manager').exists()
+        )
+
+class IsAdmin(BasePermission):
+    """
+    Custom permission to allow only Admin to delete objects.
+    """
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.groups.filter(name='Admin').exists()
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
@@ -24,7 +44,7 @@ class TaskViewSet(viewsets.ModelViewSet):
 class RevenueLogViewSet(viewsets.ModelViewSet):
     queryset = RevenueLog.objects.all()
     serializer_class = RevenueLogSerializer
-    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+    permission_classes = [IsAuthenticated, TokenHasReadWriteScope, IsAdminOrManager]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ['task__project__id', 'task__id', 'date']
     ordering_fields = ['date', 'revenue']
@@ -44,3 +64,9 @@ class RevenueLogViewSet(viewsets.ModelViewSet):
         ).aggregate(total_revenue=Sum('revenue'))
 
         return Response({'project_id': project_id, 'total_revenue': logs['total_revenue']})
+
+    def destroy(self, request, *args, **kwargs):
+        # Restrict delete functionality to Admin only
+        self.permission_classes = [IsAuthenticated, TokenHasReadWriteScope, IsAdmin]
+        return super().destroy(request, *args, **kwargs)
+
