@@ -108,7 +108,10 @@ DATABASES = {
     }
 }
 
-
+# Redirect users to login page when authentication is required
+LOGIN_URL = '/admin/login/'  # Redirect to admin login if not logged in
+LOGIN_REDIRECT_URL = '/admin/'  # Redirect to admin dashboard after login
+LOGOUT_REDIRECT_URL = '/admin/login/'
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
