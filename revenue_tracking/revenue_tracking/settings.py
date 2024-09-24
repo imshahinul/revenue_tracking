@@ -153,3 +153,8 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+SECURE_SSL_REDIRECT = True  # Redirect all HTTP requests to HTTPS
+CSRF_COOKIE_SECURE = True   # Ensure CSRF cookies are sent only via HTTPS
+SESSION_COOKIE_SECURE = True  # Ensure session cookies are sent only via HTTPS
